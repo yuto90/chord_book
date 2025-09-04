@@ -1,27 +1,20 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/metronome/metronome_data.dart';
 import '../../models/enums/metronome_state.dart';
 import '../../services/metronome_service.dart';
 
-class MetronomeViewModel extends ChangeNotifier {
-  final MetronomeService _metronomeService = MetronomeService();
-  MetronomeData _data = const MetronomeData();
+class MetronomeNotifier extends StateNotifier<MetronomeData> {
+  late final MetronomeService _metronomeService;
 
-  MetronomeData get data => _data;
-  int get bpm => _data.bpm;
-  int get beatsPerMeasure => _data.beatsPerMeasure;
-  MetronomeState get state => _data.state;
-  int get currentBeat => _data.currentBeat;
-
-  MetronomeViewModel() {
+  MetronomeNotifier() : super(const MetronomeData()) {
+    _metronomeService = MetronomeService();
     _metronomeService.stream.listen((data) {
-      _data = data;
-      notifyListeners();
+      state = data;
     });
   }
 
   void start() {
-    _metronomeService.start(_data.bpm, _data.beatsPerMeasure);
+    _metronomeService.start(state.bpm, state.beatsPerMeasure);
   }
 
   void stop() {
@@ -49,9 +42,9 @@ class MetronomeViewModel extends ChangeNotifier {
   }
 
   void togglePlayPause() {
-    if (_data.state.isPlaying) {
+    if (state.state.isPlaying) {
       pause();
-    } else if (_data.state.isPaused) {
+    } else if (state.state.isPaused) {
       resume();
     } else {
       start();
@@ -64,3 +57,24 @@ class MetronomeViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+
+final metronomeProvider = StateNotifierProvider<MetronomeNotifier, MetronomeData>(
+  (ref) => MetronomeNotifier(),
+);
+
+// Computed providers for convenience
+final metronomeBpmProvider = Provider<int>((ref) {
+  return ref.watch(metronomeProvider).bpm;
+});
+
+final metronomeBeatsPerMeasureProvider = Provider<int>((ref) {
+  return ref.watch(metronomeProvider).beatsPerMeasure;
+});
+
+final metronomeStateProvider = Provider<MetronomeState>((ref) {
+  return ref.watch(metronomeProvider).state;
+});
+
+final metronomeCurrentBeatProvider = Provider<int>((ref) {
+  return ref.watch(metronomeProvider).currentBeat;
+});

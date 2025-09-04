@@ -1,51 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../viewmodels/metronome/metronome_view_model.dart';
 import '../../../models/enums/metronome_state.dart';
 
-class MetronomeScreen extends StatefulWidget {
-  final MetronomeViewModel? metronomeViewModel;
-  
-  const MetronomeScreen({
-    super.key,
-    this.metronomeViewModel,
-  });
+class MetronomeScreen extends ConsumerWidget {
+  const MetronomeScreen({super.key});
 
   @override
-  State<MetronomeScreen> createState() => _MetronomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final metronomeData = ref.watch(metronomeProvider);
+    final metronomeNotifier = ref.read(metronomeProvider.notifier);
 
-class _MetronomeScreenState extends State<MetronomeScreen> {
-  late MetronomeViewModel _viewModel;
-  bool _ownViewModel = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.metronomeViewModel != null) {
-      _viewModel = widget.metronomeViewModel!;
-      _ownViewModel = false;
-    } else {
-      _viewModel = MetronomeViewModel();
-      _ownViewModel = true;
-    }
-    _viewModel.addListener(_onMetronomeStateChanged);
-  }
-
-  @override
-  void dispose() {
-    _viewModel.removeListener(_onMetronomeStateChanged);
-    if (_ownViewModel) {
-      _viewModel.dispose();
-    }
-    super.dispose();
-  }
-
-  void _onMetronomeStateChanged() {
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -57,7 +22,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  '${_viewModel.bpm} BPM',
+                  '${metronomeData.bpm} BPM',
                   style: const TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -77,9 +42,9 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                         height: 120,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_viewModel.beatsPerMeasure, (index) {
+                          children: List.generate(metronomeData.beatsPerMeasure, (index) {
                             final beatNumber = index + 1;
-                            final isCurrentBeat = beatNumber == _viewModel.currentBeat && _viewModel.state.isPlaying;
+                            final isCurrentBeat = beatNumber == metronomeData.currentBeat && metronomeData.state.isPlaying;
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 8),
                               child: CircleAvatar(
@@ -107,20 +72,20 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                         children: [
                           // BPM decrease
                           ElevatedButton(
-                            onPressed: () => _viewModel.setBpm(_viewModel.bpm - 1),
+                            onPressed: () => metronomeNotifier.setBpm(metronomeData.bpm - 1),
                             child: const Icon(Icons.remove),
                           ),
                           
                           // Play/Pause button
                           ElevatedButton(
-                            onPressed: _viewModel.togglePlayPause,
+                            onPressed: metronomeNotifier.togglePlayPause,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _viewModel.state.isPlaying ? Colors.red : Colors.green,
+                              backgroundColor: metronomeData.state.isPlaying ? Colors.red : Colors.green,
                               minimumSize: const Size(80, 80),
                               shape: const CircleBorder(),
                             ),
                             child: Icon(
-                              _viewModel.state.isPlaying ? Icons.pause : Icons.play_arrow,
+                              metronomeData.state.isPlaying ? Icons.pause : Icons.play_arrow,
                               size: 40,
                               color: Colors.white,
                             ),
@@ -128,7 +93,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                           
                           // BPM increase
                           ElevatedButton(
-                            onPressed: () => _viewModel.setBpm(_viewModel.bpm + 1),
+                            onPressed: () => metronomeNotifier.setBpm(metronomeData.bpm + 1),
                             child: const Icon(Icons.add),
                           ),
                         ],
@@ -138,7 +103,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                       
                       // Stop button
                       ElevatedButton(
-                        onPressed: _viewModel.stop,
+                        onPressed: metronomeNotifier.stop,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey,
                         ),
@@ -157,10 +122,10 @@ class _MetronomeScreenState extends State<MetronomeScreen> {
                   children: [
                     const Text('拍子: '),
                     DropdownButton<int>(
-                      value: _viewModel.beatsPerMeasure,
+                      value: metronomeData.beatsPerMeasure,
                       onChanged: (value) {
                         if (value != null) {
-                          _viewModel.setBeatsPerMeasure(value);
+                          metronomeNotifier.setBeatsPerMeasure(value);
                         }
                       },
                       items: [2, 3, 4, 5, 6].map((beats) {

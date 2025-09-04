@@ -1,42 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../viewmodels/metronome/metronome_view_model.dart';
 import '../../models/enums/metronome_state.dart';
 
-class AppHeaderWidget extends StatefulWidget implements PreferredSizeWidget {
-  final MetronomeViewModel metronomeViewModel;
-  
-  const AppHeaderWidget({
-    super.key,
-    required this.metronomeViewModel,
-  });
+class AppHeaderWidget extends ConsumerWidget implements PreferredSizeWidget {
+  const AppHeaderWidget({super.key});
 
   @override
-  State<AppHeaderWidget> createState() => _AppHeaderWidgetState();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-}
-
-class _AppHeaderWidgetState extends State<AppHeaderWidget> {
-  @override
-  void initState() {
-    super.initState();
-    widget.metronomeViewModel.addListener(_onMetronomeStateChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.metronomeViewModel.removeListener(_onMetronomeStateChanged);
-    super.dispose();
-  }
-
-  void _onMetronomeStateChanged() {
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final metronome = widget.metronomeViewModel;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final metronomeData = ref.watch(metronomeProvider);
+    final metronomeNotifier = ref.read(metronomeProvider.notifier);
     
     return AppBar(
       backgroundColor: Colors.white,
@@ -57,15 +30,15 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
                 Icon(
                   Icons.music_note,
                   size: 16,
-                  color: metronome.state.isPlaying ? Colors.red : Colors.grey[600],
+                  color: metronomeData.state.isPlaying ? Colors.red : Colors.grey[600],
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${metronome.bpm}',
+                  '${metronomeData.bpm}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: metronome.state.isPlaying ? Colors.red : Colors.grey[600],
+                    color: metronomeData.state.isPlaying ? Colors.red : Colors.grey[600],
                   ),
                 ),
               ],
@@ -75,7 +48,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
           const SizedBox(width: 12),
           
           // Current beat indicator (only show when playing)
-          if (metronome.state.isPlaying)
+          if (metronomeData.state.isPlaying)
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
@@ -83,7 +56,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${metronome.currentBeat}',
+                '${metronomeData.currentBeat}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -96,7 +69,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
       actions: [
         // BPM controls
         IconButton(
-          onPressed: () => metronome.setBpm(metronome.bpm - 1),
+          onPressed: () => metronomeNotifier.setBpm(metronomeData.bpm - 1),
           icon: const Icon(Icons.remove, size: 18),
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -104,10 +77,10 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
         
         // Play/Pause button
         IconButton(
-          onPressed: metronome.togglePlayPause,
+          onPressed: metronomeNotifier.togglePlayPause,
           icon: Icon(
-            metronome.state.isPlaying ? Icons.pause : Icons.play_arrow,
-            color: metronome.state.isPlaying ? Colors.red : Colors.grey[700],
+            metronomeData.state.isPlaying ? Icons.pause : Icons.play_arrow,
+            color: metronomeData.state.isPlaying ? Colors.red : Colors.grey[700],
           ),
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -115,7 +88,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
         
         // BPM controls
         IconButton(
-          onPressed: () => metronome.setBpm(metronome.bpm + 1),
+          onPressed: () => metronomeNotifier.setBpm(metronomeData.bpm + 1),
           icon: const Icon(Icons.add, size: 18),
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -123,7 +96,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
         
         // Stop button
         IconButton(
-          onPressed: metronome.stop,
+          onPressed: metronomeNotifier.stop,
           icon: const Icon(Icons.stop, size: 18),
           color: Colors.grey[600],
           padding: const EdgeInsets.all(4),
@@ -134,4 +107,7 @@ class _AppHeaderWidgetState extends State<AppHeaderWidget> {
       ],
     );
   }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'views/common/main_scaffold.dart';
 
 void main() {
-  runApp(const ChordBookApp());
+  runApp(const ProviderScope(child: ChordBookApp()));
 }
 
 class ChordBookApp extends StatelessWidget {

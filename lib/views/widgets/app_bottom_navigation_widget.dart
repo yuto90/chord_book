@@ -1,43 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/enums/navigation_tab.dart';
 import '../../viewmodels/navigation/navigation_view_model.dart';
 
-class AppBottomNavigationWidget extends StatefulWidget {
-  final NavigationViewModel navigationViewModel;
-  
-  const AppBottomNavigationWidget({
-    super.key,
-    required this.navigationViewModel,
-  });
+class AppBottomNavigationWidget extends ConsumerWidget {
+  const AppBottomNavigationWidget({super.key});
 
   @override
-  State<AppBottomNavigationWidget> createState() => _AppBottomNavigationWidgetState();
-}
-
-class _AppBottomNavigationWidgetState extends State<AppBottomNavigationWidget> {
-  @override
-  void initState() {
-    super.initState();
-    widget.navigationViewModel.addListener(_onNavigationChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.navigationViewModel.removeListener(_onNavigationChanged);
-    super.dispose();
-  }
-
-  void _onNavigationChanged() {
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTab = ref.watch(navigationProvider);
+    
     return BottomNavigationBar(
-      currentIndex: widget.navigationViewModel.currentTab.index,
+      currentIndex: currentTab.index,
       onTap: (index) {
         final tab = NavigationTab.values[index];
-        widget.navigationViewModel.setTab(tab);
+        ref.read(navigationProvider.notifier).setTab(tab);
       },
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
