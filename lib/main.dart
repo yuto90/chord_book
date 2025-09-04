@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'views/common/main_scaffold.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: ChordBookApp()));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class ChordBookApp extends StatelessWidget {
+  const ChordBookApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
+    return MaterialApp(
+      title: 'Chord Book',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 1,
         ),
       ),
+      home: const MainScaffold(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

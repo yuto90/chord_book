@@ -4,16 +4,26 @@ publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.8.1
+  sdk: ">=3.5.0 <4.0.0"  # 開発環境のDart 3.5.0 に合わせて調整
 
 dependencies:
   flutter:
     sdk: flutter
+  # 状態管理 / アノテーション
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  # 不変データ / シリアライズ
+  freezed_annotation: ^2.4.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # コード生成系
+  build_runner: ^2.4.9
+  riverpod_generator: ^2.3.5
+  freezed: ^2.5.2
+  json_serializable: ^6.9.0
 
 flutter:
   uses-material-design: true
