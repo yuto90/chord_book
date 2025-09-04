@@ -235,39 +235,6 @@ class MetronomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTapTempo(metronomeData, metronomeNotifier) {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: metronomeNotifier.tapTempo,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.purple,
-            minimumSize: const Size(200, 50),
-          ),
-          child: const Text(
-            'TAP TEMPO',
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-        ),
-        
-        if (metronomeData.tapTimestamps.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Taps: ${metronomeData.tapTimestamps.length}'),
-              const SizedBox(width: 16),
-              TextButton(
-                onPressed: metronomeNotifier.clearTapTempo,
-                child: const Text('クリア'),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
   Widget _buildBottomControls(metronomeData, metronomeNotifier) {
     return Column(
       children: [
