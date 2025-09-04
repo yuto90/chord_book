@@ -301,9 +301,8 @@ class _$MetronomeDataImpl extends _MetronomeData {
   @override
   @JsonKey()
   List<int> get tapTimestamps {
-    if (_tapTimestamps is EqualUnmodifiableListView) return _tapTimestamps;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_tapTimestamps);
+    return List<int>.unmodifiable(_tapTimestamps);
   }
 
   @override
@@ -341,7 +340,7 @@ class _$MetronomeDataImpl extends _MetronomeData {
                 other.isCountingIn == isCountingIn) &&
             (identical(other.countInBeat, countInBeat) ||
                 other.countInBeat == countInBeat) &&
-            const DeepCollectionEquality()
+            const ListEquality()
                 .equals(other._tapTimestamps, _tapTimestamps) &&
             (identical(other.timeSignatureNumerator, timeSignatureNumerator) ||
                 other.timeSignatureNumerator == timeSignatureNumerator) &&
@@ -362,7 +361,7 @@ class _$MetronomeDataImpl extends _MetronomeData {
       countInMeasures,
       isCountingIn,
       countInBeat,
-      const DeepCollectionEquality().hash(_tapTimestamps),
+      const ListEquality().hash(_tapTimestamps),
       timeSignatureNumerator,
       timeSignatureDenominator);
 
