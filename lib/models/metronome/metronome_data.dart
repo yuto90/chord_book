@@ -18,7 +18,7 @@ class MetronomeData with _$MetronomeData {
     @Default(0) int countInMeasures, // 0 = off, 1-4 = count-in measures
     @Default(false) bool isCountingIn,
     @Default(0) int countInBeat,
-    // タップテンポ用
+    // タップテンポ用（削除予定だが、freezed互換性のため一時的に保持）
     @Default(<int>[]) List<int> tapTimestamps,
     // 時間表記設定（将来的な拡張用）
     @Default(4) int timeSignatureNumerator,

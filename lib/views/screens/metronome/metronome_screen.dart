@@ -38,11 +38,6 @@ class MetronomeScreen extends ConsumerWidget {
                     
                     // BPM controls
                     _buildBpmControls(metronomeData, metronomeNotifier),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Tap tempo
-                    _buildTapTempo(metronomeData, metronomeNotifier),
                   ],
                 ),
               ),
@@ -61,23 +56,26 @@ class MetronomeScreen extends ConsumerWidget {
       children: [
         // BPM Display
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '${metronomeData.bpm}',
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+          child: GestureDetector(
+            onTap: () => _showBpmInputDialog(context, metronomeData, metronomeNotifier),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '${metronomeData.bpm}',
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const Text('BPM'),
-              ],
+                  const Text('BPM (タップして設定)'),
+                ],
+              ),
             ),
           ),
         ),
@@ -295,6 +293,66 @@ class MetronomeScreen extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+
+  void _showBpmInputDialog(BuildContext context, metronomeData, metronomeNotifier) {
+    final TextEditingController bpmController = TextEditingController(
+      text: metronomeData.bpm.toString(),
+    );
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('BPM設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: bpmController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'BPM (30-300)',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (value) {
+                final bpm = int.tryParse(value);
+                if (bpm != null && bpm >= 30 && bpm <= 300) {
+                  metronomeNotifier.setBpm(bpm);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '設定範囲: 30-300 BPM',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final bpm = int.tryParse(bpmController.text);
+              if (bpm != null && bpm >= 30 && bpm <= 300) {
+                metronomeNotifier.setBpm(bpm);
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('BPMは30-300の範囲で入力してください'),
+                  ),
+                );
+              }
+            },
+            child: const Text('設定'),
+          ),
+        ],
+      ),
     );
   }
 

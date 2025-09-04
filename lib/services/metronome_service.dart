@@ -251,33 +251,6 @@ class MetronomeService {
     _controller?.add(_currentData);
   }
 
-  void addTapTempo() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final taps = List<int>.from(_currentData.tapTimestamps)..add(now);
-    if (taps.length > 8) taps.removeAt(0);
-    if (taps.length >= 2) {
-      final intervals = <int>[];
-      for (int i = 1; i < taps.length; i++) {
-        intervals.add(taps[i] - taps[i - 1]);
-      }
-      if (intervals.isNotEmpty) {
-        final avgInterval =
-            intervals.reduce((a, b) => a + b) / intervals.length;
-        final calculatedBpm = (60000 / avgInterval).round();
-        if (calculatedBpm >= 30 && calculatedBpm <= 300) {
-          setBpm(calculatedBpm);
-        }
-      }
-    }
-    _currentData = _currentData.copyWith(tapTimestamps: taps);
-    _controller?.add(_currentData);
-  }
-
-  void clearTapTempo() {
-    _currentData = _currentData.copyWith(tapTimestamps: []);
-    _controller?.add(_currentData);
-  }
-
   void dispose() {
     stop();
   }

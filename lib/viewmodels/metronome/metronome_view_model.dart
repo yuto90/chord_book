@@ -63,17 +63,9 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
       pause();
     } else if (state.state.isPaused) {
       resume();
-    } else {
+    } else if (state.state.isStopped) {
       start(countInMeasures: state.countInMeasures);
     }
-  }
-
-  void tapTempo() {
-    _metronomeService.addTapTempo();
-  }
-
-  void clearTapTempo() {
-    _metronomeService.clearTapTempo();
   }
 
   void adjustBpm(int delta) {
