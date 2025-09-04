@@ -12,25 +12,29 @@ part of 'metronome_data.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$MetronomeData {
   int get bpm => throw _privateConstructorUsedError;
   int get beatsPerMeasure => throw _privateConstructorUsedError;
   MetronomeState get state => throw _privateConstructorUsedError;
-  int get currentBeat => throw _privateConstructorUsedError;
+  int get currentBeat => throw _privateConstructorUsedError; // 出力設定
   bool get audioEnabled => throw _privateConstructorUsedError;
   bool get visualEnabled => throw _privateConstructorUsedError;
-  bool get hapticsEnabled => throw _privateConstructorUsedError;
-  int get countInMeasures => throw _privateConstructorUsedError;
+  bool get hapticsEnabled => throw _privateConstructorUsedError; // カウントイン設定
+  int get countInMeasures =>
+      throw _privateConstructorUsedError; // 0 = off, 1-4 = count-in measures
   bool get isCountingIn => throw _privateConstructorUsedError;
-  int get countInBeat => throw _privateConstructorUsedError;
-  List<int> get tapTimestamps => throw _privateConstructorUsedError;
+  int get countInBeat => throw _privateConstructorUsedError; // タップテンポ用
+  List<int> get tapTimestamps =>
+      throw _privateConstructorUsedError; // 時間表記設定（将来的な拡張用）
   int get timeSignatureNumerator => throw _privateConstructorUsedError;
   int get timeSignatureDenominator => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MetronomeData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $MetronomeDataCopyWith<MetronomeData> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -67,6 +71,8 @@ class _$MetronomeDataCopyWithImpl<$Res, $Val extends MetronomeData>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of MetronomeData
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -173,6 +179,8 @@ class __$$MetronomeDataImplCopyWithImpl<$Res>
       _$MetronomeDataImpl _value, $Res Function(_$MetronomeDataImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of MetronomeData
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -279,6 +287,7 @@ class _$MetronomeDataImpl extends _MetronomeData {
   @override
   @JsonKey()
   final int currentBeat;
+// 出力設定
   @override
   @JsonKey()
   final bool audioEnabled;
@@ -288,23 +297,29 @@ class _$MetronomeDataImpl extends _MetronomeData {
   @override
   @JsonKey()
   final bool hapticsEnabled;
+// カウントイン設定
   @override
   @JsonKey()
   final int countInMeasures;
+// 0 = off, 1-4 = count-in measures
   @override
   @JsonKey()
   final bool isCountingIn;
   @override
   @JsonKey()
   final int countInBeat;
+// タップテンポ用
   final List<int> _tapTimestamps;
+// タップテンポ用
   @override
   @JsonKey()
   List<int> get tapTimestamps {
+    if (_tapTimestamps is EqualUnmodifiableListView) return _tapTimestamps;
     // ignore: implicit_dynamic_type
-    return List<int>.unmodifiable(_tapTimestamps);
+    return EqualUnmodifiableListView(_tapTimestamps);
   }
 
+// 時間表記設定（将来的な拡張用）
   @override
   @JsonKey()
   final int timeSignatureNumerator;
@@ -318,7 +333,7 @@ class _$MetronomeDataImpl extends _MetronomeData {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MetronomeDataImpl &&
@@ -340,11 +355,12 @@ class _$MetronomeDataImpl extends _MetronomeData {
                 other.isCountingIn == isCountingIn) &&
             (identical(other.countInBeat, countInBeat) ||
                 other.countInBeat == countInBeat) &&
-            const ListEquality()
+            const DeepCollectionEquality()
                 .equals(other._tapTimestamps, _tapTimestamps) &&
             (identical(other.timeSignatureNumerator, timeSignatureNumerator) ||
                 other.timeSignatureNumerator == timeSignatureNumerator) &&
-            (identical(other.timeSignatureDenominator, timeSignatureDenominator) ||
+            (identical(
+                    other.timeSignatureDenominator, timeSignatureDenominator) ||
                 other.timeSignatureDenominator == timeSignatureDenominator));
   }
 
@@ -361,11 +377,13 @@ class _$MetronomeDataImpl extends _MetronomeData {
       countInMeasures,
       isCountingIn,
       countInBeat,
-      const ListEquality().hash(_tapTimestamps),
+      const DeepCollectionEquality().hash(_tapTimestamps),
       timeSignatureNumerator,
       timeSignatureDenominator);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MetronomeData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$MetronomeDataImplCopyWith<_$MetronomeDataImpl> get copyWith =>
@@ -396,27 +414,30 @@ abstract class _MetronomeData extends MetronomeData {
   @override
   MetronomeState get state;
   @override
-  int get currentBeat;
+  int get currentBeat; // 出力設定
   @override
   bool get audioEnabled;
   @override
   bool get visualEnabled;
   @override
-  bool get hapticsEnabled;
+  bool get hapticsEnabled; // カウントイン設定
   @override
-  int get countInMeasures;
+  int get countInMeasures; // 0 = off, 1-4 = count-in measures
   @override
   bool get isCountingIn;
   @override
-  int get countInBeat;
+  int get countInBeat; // タップテンポ用
   @override
-  List<int> get tapTimestamps;
+  List<int> get tapTimestamps; // 時間表記設定（将来的な拡張用）
   @override
   int get timeSignatureNumerator;
   @override
   int get timeSignatureDenominator;
+
+  /// Create a copy of MetronomeData
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$MetronomeDataImplCopyWith<_$MetronomeDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

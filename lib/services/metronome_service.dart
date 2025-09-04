@@ -10,12 +10,16 @@ class MetronomeService {
   MetronomeData _currentData = const MetronomeData();
   Timer? _countInTimer;
 
-  Stream<MetronomeData> get stream => _controller?.stream ?? const Stream.empty();
+  // メイン/アクセント用クリック音アセットパス（存在するファイルに差し替えてください）
+  static const String _mainClickPath = 'assets/audio/pon.mp3';
+  static const String _accentClickPath = 'assets/audio/finish.wav';
+
+  Stream<MetronomeData> get stream =>
+      _controller?.stream ?? const Stream.empty();
   MetronomeData get currentData => _currentData;
 
   void start(int bpm, int beatsPerMeasure, {int countInMeasures = 0}) {
     stop(); // Stop any existing metronome
-    
     _controller = StreamController<MetronomeData>.broadcast();
     _currentData = MetronomeData(
       bpm: bpm,
@@ -29,9 +33,7 @@ class MetronomeService {
       visualEnabled: _currentData.visualEnabled,
       hapticsEnabled: _currentData.hapticsEnabled,
     );
-    
     _controller!.add(_currentData);
-    
     if (countInMeasures > 0) {
       _startCountIn(bpm, beatsPerMeasure, countInMeasures);
     } else {
@@ -43,7 +45,6 @@ class MetronomeService {
     final interval = Duration(milliseconds: (60000 / bpm).round());
     int totalCountInBeats = countInMeasures * beatsPerMeasure;
     int currentCountInBeat = 1;
-    
     _countInTimer = Timer.periodic(interval, (timer) {
       if (currentCountInBeat <= totalCountInBeats) {
         _currentData = _currentData.copyWith(
@@ -51,13 +52,9 @@ class MetronomeService {
           currentBeat: ((currentCountInBeat - 1) % beatsPerMeasure) + 1,
         );
         _controller!.add(_currentData);
-        
-        // カウントイン音とハプティクス
         _playCountInSound(currentCountInBeat, beatsPerMeasure);
-        
         currentCountInBeat++;
       } else {
-        // カウントイン終了、通常演奏開始
         timer.cancel();
         _currentData = _currentData.copyWith(
           isCountingIn: false,
@@ -70,72 +67,76 @@ class MetronomeService {
     });
   }
 
-  void _startMetronome(int bpm, int beatsPerMeasure) {
+  // ===== 修正: metronomeパッケージ正しい初期化 =====
+  Future<bool> _initializeMetronome(
+      {required int bpm, required int beatsPerMeasure}) async {
+    _metronome = Metronome();
     try {
-      _metronome = Metronome.create(
+      await _metronome!.init(
+        _mainClickPath,
         bpm: bpm,
-        subdivision: Subdivision.quarter,
+        enableTickCallback: true,
+        accentedPath: _accentClickPath,
       );
-      
-      _metronome!.init().then((_) {
-        _metronome!.play();
-        
-        // Beat tracking timer for UI updates
-        final interval = Duration(milliseconds: (60000 / bpm).round());
-        Timer.periodic(interval, (timer) {
-          if (_currentData.state != MetronomeState.playing || _metronome == null) {
-            timer.cancel();
-            return;
-          }
-          
-          final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
-          _currentData = _currentData.copyWith(currentBeat: nextBeat);
-          _controller!.add(_currentData);
-          
-          // ハプティクスフィードバック
-          if (_currentData.hapticsEnabled) {
-            _triggerHaptics(_currentData.isStrongBeat);
-          }
-        });
-      });
+      return true; // 成功
     } catch (e) {
-      // Fallback to timer-based approach if metronome package fails
+      // 初期化失敗 -> メトロノーム無効化し fallback
+      _metronome = null;
       _startTimerBasedMetronome(bpm, beatsPerMeasure);
+      return false;
+    }
+  }
+
+  void _handleTick(int beatsPerMeasure) {
+    if (_currentData.state != MetronomeState.playing) return;
+    final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
+    _currentData = _currentData.copyWith(currentBeat: nextBeat);
+    _controller?.add(_currentData);
+    if (_currentData.hapticsEnabled) {
+      _triggerHaptics(nextBeat == 1);
+    }
+  }
+
+  void _startMetronome(int bpm, int beatsPerMeasure) async {
+    final success =
+        await _initializeMetronome(bpm: bpm, beatsPerMeasure: beatsPerMeasure);
+    if (!success) return; // fallback 動作中
+    if (_metronome != null &&
+        _currentData.state == MetronomeState.playing &&
+        !_currentData.isCountingIn) {
+      try {
+        _metronome!.onListenTick((_) => _handleTick(beatsPerMeasure));
+        await _metronome!.play(bpm); // 初期化成功時のみ再生
+      } catch (_) {
+        _metronome = null;
+        _startTimerBasedMetronome(bpm, beatsPerMeasure);
+      }
     }
   }
 
   void _startTimerBasedMetronome(int bpm, int beatsPerMeasure) {
     final interval = Duration(milliseconds: (60000 / bpm).round());
-    
     Timer.periodic(interval, (timer) {
       if (_currentData.state != MetronomeState.playing) {
         timer.cancel();
         return;
       }
-      
       final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
       _currentData = _currentData.copyWith(currentBeat: nextBeat);
-      _controller!.add(_currentData);
-      
-      // 基本的なオーディオとハプティクス
+      _controller?.add(_currentData);
       if (_currentData.audioEnabled) {
-        SystemSound.play(_currentData.isStrongBeat 
-            ? SystemSound.click 
-            : SystemSound.click);
+        SystemSound.play(SystemSoundType.click);
       }
-      
       if (_currentData.hapticsEnabled) {
-        _triggerHaptics(_currentData.isStrongBeat);
+        _triggerHaptics(nextBeat == 1);
       }
     });
   }
 
   void _playCountInSound(int beat, int beatsPerMeasure) {
     if (_currentData.audioEnabled) {
-      final isStrongBeat = ((beat - 1) % beatsPerMeasure) == 0;
-      SystemSound.play(isStrongBeat ? SystemSound.click : SystemSound.click);
+      SystemSound.play(SystemSoundType.click);
     }
-    
     if (_currentData.hapticsEnabled) {
       _triggerHaptics(((beat - 1) % beatsPerMeasure) == 0);
     }
@@ -150,12 +151,14 @@ class MetronomeService {
   }
 
   void stop() {
-    _metronome?.stop();
-    _metronome?.dispose();
+    // v1.1.5: destroy() でクリーンアップ
+    try {
+      _metronome?.stop();
+      _metronome?.destroy();
+    } catch (_) {}
     _metronome = null;
     _countInTimer?.cancel();
     _countInTimer = null;
-    
     _currentData = _currentData.copyWith(
       state: MetronomeState.stopped,
       currentBeat: 0,
@@ -168,7 +171,9 @@ class MetronomeService {
   }
 
   void pause() {
-    _metronome?.pause();
+    try {
+      _metronome?.pause();
+    } catch (_) {}
     _countInTimer?.cancel();
     _countInTimer = null;
     _currentData = _currentData.copyWith(state: MetronomeState.paused);
@@ -178,10 +183,22 @@ class MetronomeService {
   void resume() {
     if (_currentData.state == MetronomeState.paused) {
       if (_currentData.isCountingIn) {
-        start(_currentData.bpm, _currentData.beatsPerMeasure, 
-              countInMeasures: _currentData.countInMeasures);
+        start(_currentData.bpm, _currentData.beatsPerMeasure,
+            countInMeasures: _currentData.countInMeasures);
       } else {
-        _metronome?.play();
+        if (_metronome == null) {
+          // 破棄済みなら再初期化
+          _startMetronome(_currentData.bpm, _currentData.beatsPerMeasure);
+        } else {
+          try {
+            _metronome?.onListenTick(
+                (_) => _handleTick(_currentData.beatsPerMeasure));
+            _metronome?.play(_currentData.bpm);
+          } catch (_) {
+            _metronome = null;
+            _startMetronome(_currentData.bpm, _currentData.beatsPerMeasure);
+          }
+        }
         _currentData = _currentData.copyWith(state: MetronomeState.playing);
         _controller?.add(_currentData);
       }
@@ -189,14 +206,12 @@ class MetronomeService {
   }
 
   void setBpm(int bpm) {
-    // BPM range: 30-300
     if (bpm < 30 || bpm > 300) return;
-    
     final wasPlaying = _currentData.state.isPlaying;
     if (wasPlaying) {
-      stop();
-      start(bpm, _currentData.beatsPerMeasure, 
-            countInMeasures: _currentData.countInMeasures);
+      final beatsPerMeasure = _currentData.beatsPerMeasure;
+      final countIn = _currentData.countInMeasures;
+      start(bpm, beatsPerMeasure, countInMeasures: countIn);
     } else {
       _currentData = _currentData.copyWith(bpm: bpm);
       _controller?.add(_currentData);
@@ -205,12 +220,10 @@ class MetronomeService {
 
   void setBeatsPerMeasure(int beatsPerMeasure) {
     if (beatsPerMeasure < 1 || beatsPerMeasure > 12) return;
-    
     final wasPlaying = _currentData.state.isPlaying;
     if (wasPlaying) {
-      stop();
       start(_currentData.bpm, beatsPerMeasure,
-            countInMeasures: _currentData.countInMeasures);
+          countInMeasures: _currentData.countInMeasures);
     } else {
       _currentData = _currentData.copyWith(beatsPerMeasure: beatsPerMeasure);
       _controller?.add(_currentData);
@@ -234,40 +247,28 @@ class MetronomeService {
 
   void setCountInMeasures(int measures) {
     if (measures < 0 || measures > 4) return;
-    
     _currentData = _currentData.copyWith(countInMeasures: measures);
     _controller?.add(_currentData);
   }
 
   void addTapTempo() {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final taps = List<int>.from(_currentData.tapTimestamps);
-    
-    taps.add(now);
-    
-    // Keep only last 8 taps for calculation
-    if (taps.length > 8) {
-      taps.removeAt(0);
-    }
-    
-    // Calculate BPM if we have at least 2 taps
+    final taps = List<int>.from(_currentData.tapTimestamps)..add(now);
+    if (taps.length > 8) taps.removeAt(0);
     if (taps.length >= 2) {
       final intervals = <int>[];
       for (int i = 1; i < taps.length; i++) {
         intervals.add(taps[i] - taps[i - 1]);
       }
-      
       if (intervals.isNotEmpty) {
-        final avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+        final avgInterval =
+            intervals.reduce((a, b) => a + b) / intervals.length;
         final calculatedBpm = (60000 / avgInterval).round();
-        
-        // Apply BPM if within valid range
         if (calculatedBpm >= 30 && calculatedBpm <= 300) {
           setBpm(calculatedBpm);
         }
       }
     }
-    
     _currentData = _currentData.copyWith(tapTimestamps: taps);
     _controller?.add(_currentData);
   }
