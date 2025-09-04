@@ -3,7 +3,12 @@ import '../../../viewmodels/metronome/metronome_view_model.dart';
 import '../../../models/enums/metronome_state.dart';
 
 class MetronomeScreen extends StatefulWidget {
-  const MetronomeScreen({super.key});
+  final MetronomeViewModel? metronomeViewModel;
+  
+  const MetronomeScreen({
+    super.key,
+    this.metronomeViewModel,
+  });
 
   @override
   State<MetronomeScreen> createState() => _MetronomeScreenState();
@@ -11,18 +16,27 @@ class MetronomeScreen extends StatefulWidget {
 
 class _MetronomeScreenState extends State<MetronomeScreen> {
   late MetronomeViewModel _viewModel;
+  bool _ownViewModel = false;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = MetronomeViewModel();
+    if (widget.metronomeViewModel != null) {
+      _viewModel = widget.metronomeViewModel!;
+      _ownViewModel = false;
+    } else {
+      _viewModel = MetronomeViewModel();
+      _ownViewModel = true;
+    }
     _viewModel.addListener(_onMetronomeStateChanged);
   }
 
   @override
   void dispose() {
     _viewModel.removeListener(_onMetronomeStateChanged);
-    _viewModel.dispose();
+    if (_ownViewModel) {
+      _viewModel.dispose();
+    }
     super.dispose();
   }
 

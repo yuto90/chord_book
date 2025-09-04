@@ -44,7 +44,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       case NavigationTab.home:
         return const HomeScreen();
       case NavigationTab.metronome:
-        return const MetronomeScreen();
+        return MetronomeScreen(metronomeViewModel: _metronomeViewModel);
       case NavigationTab.settings:
         return const SettingsScreen();
     }
