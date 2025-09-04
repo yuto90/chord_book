@@ -14,6 +14,8 @@ dependencies:
   riverpod_annotation: ^2.3.5
   # 不変データ / シリアライズ
   freezed_annotation: ^2.4.1
+  # メトロノーム機能
+  metronome: ^1.0.0
 
 dev_dependencies:
   flutter_test:

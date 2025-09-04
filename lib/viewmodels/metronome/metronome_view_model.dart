@@ -13,8 +13,9 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
     });
   }
 
-  void start() {
-    _metronomeService.start(state.bpm, state.beatsPerMeasure);
+  void start({int countInMeasures = 0}) {
+    _metronomeService.start(state.bpm, state.beatsPerMeasure, 
+                           countInMeasures: countInMeasures);
   }
 
   void stop() {
@@ -30,7 +31,7 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
   }
 
   void setBpm(int bpm) {
-    if (bpm >= 40 && bpm <= 200) {
+    if (bpm >= 30 && bpm <= 300) {
       _metronomeService.setBpm(bpm);
     }
   }
@@ -41,14 +42,42 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
     }
   }
 
+  void setAudioEnabled(bool enabled) {
+    _metronomeService.setAudioEnabled(enabled);
+  }
+
+  void setVisualEnabled(bool enabled) {
+    _metronomeService.setVisualEnabled(enabled);
+  }
+
+  void setHapticsEnabled(bool enabled) {
+    _metronomeService.setHapticsEnabled(enabled);
+  }
+
+  void setCountInMeasures(int measures) {
+    _metronomeService.setCountInMeasures(measures);
+  }
+
   void togglePlayPause() {
     if (state.state.isPlaying) {
       pause();
     } else if (state.state.isPaused) {
       resume();
     } else {
-      start();
+      start(countInMeasures: state.countInMeasures);
     }
+  }
+
+  void tapTempo() {
+    _metronomeService.addTapTempo();
+  }
+
+  void clearTapTempo() {
+    _metronomeService.clearTapTempo();
+  }
+
+  void adjustBpm(int delta) {
+    setBpm(state.bpm + delta);
   }
 
   @override
@@ -77,4 +106,24 @@ final metronomeStateProvider = Provider<MetronomeState>((ref) {
 
 final metronomeCurrentBeatProvider = Provider<int>((ref) {
   return ref.watch(metronomeProvider).currentBeat;
+});
+
+final metronomeAudioEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(metronomeProvider).audioEnabled;
+});
+
+final metronomeVisualEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(metronomeProvider).visualEnabled;
+});
+
+final metronomeHapticsEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(metronomeProvider).hapticsEnabled;
+});
+
+final metronomeCountInProvider = Provider<int>((ref) {
+  return ref.watch(metronomeProvider).countInMeasures;
+});
+
+final metronomeIsCountingInProvider = Provider<bool>((ref) {
+  return ref.watch(metronomeProvider).isInCountIn;
 });
