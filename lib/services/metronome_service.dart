@@ -6,7 +6,7 @@ import '../models/enums/metronome_state.dart';
 
 class MetronomeService {
   Metronome? _metronome;
-  StreamController<MetronomeData>? _controller;
+  late final StreamController<MetronomeData> _controller;
   MetronomeData _currentData = const MetronomeData();
   Timer? _countInTimer;
 
@@ -14,13 +14,15 @@ class MetronomeService {
   static const String _mainClickPath = 'assets/audio/pon.mp3';
   static const String _accentClickPath = 'assets/audio/finish.wav';
 
-  Stream<MetronomeData> get stream =>
-      _controller?.stream ?? const Stream.empty();
+  Stream<MetronomeData> get stream => _controller.stream;
   MetronomeData get currentData => _currentData;
+
+  MetronomeService() {
+    _controller = StreamController<MetronomeData>.broadcast();
+  }
 
   void start(int bpm, int beatsPerMeasure, {int countInMeasures = 0}) {
     stop(); // Stop any existing metronome
-    _controller = StreamController<MetronomeData>.broadcast();
     _currentData = MetronomeData(
       bpm: bpm,
       beatsPerMeasure: beatsPerMeasure,
@@ -33,7 +35,7 @@ class MetronomeService {
       visualEnabled: _currentData.visualEnabled,
       hapticsEnabled: _currentData.hapticsEnabled,
     );
-    _controller!.add(_currentData);
+    _controller.add(_currentData);
     if (countInMeasures > 0) {
       _startCountIn(bpm, beatsPerMeasure, countInMeasures);
     } else {
@@ -51,7 +53,7 @@ class MetronomeService {
           countInBeat: currentCountInBeat,
           currentBeat: ((currentCountInBeat - 1) % beatsPerMeasure) + 1,
         );
-        _controller!.add(_currentData);
+        _controller.add(_currentData);
         _playCountInSound(currentCountInBeat, beatsPerMeasure);
         currentCountInBeat++;
       } else {
@@ -61,7 +63,7 @@ class MetronomeService {
           countInBeat: 0,
           currentBeat: 1,
         );
-        _controller!.add(_currentData);
+        _controller.add(_currentData);
         _startMetronome(bpm, beatsPerMeasure);
       }
     });
@@ -91,7 +93,7 @@ class MetronomeService {
     if (_currentData.state != MetronomeState.playing) return;
     final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
     _currentData = _currentData.copyWith(currentBeat: nextBeat);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
     if (_currentData.hapticsEnabled) {
       _triggerHaptics(nextBeat == 1);
     }
@@ -123,7 +125,7 @@ class MetronomeService {
       }
       final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
       _currentData = _currentData.copyWith(currentBeat: nextBeat);
-      _controller?.add(_currentData);
+      _controller.add(_currentData);
       if (_currentData.audioEnabled) {
         SystemSound.play(SystemSoundType.click);
       }
@@ -165,9 +167,7 @@ class MetronomeService {
       isCountingIn: false,
       countInBeat: 0,
     );
-    _controller?.add(_currentData);
-    _controller?.close();
-    _controller = null;
+    _controller.add(_currentData);
   }
 
   void pause() {
@@ -177,7 +177,7 @@ class MetronomeService {
     _countInTimer?.cancel();
     _countInTimer = null;
     _currentData = _currentData.copyWith(state: MetronomeState.paused);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
   }
 
   void resume() {
@@ -200,7 +200,7 @@ class MetronomeService {
           }
         }
         _currentData = _currentData.copyWith(state: MetronomeState.playing);
-        _controller?.add(_currentData);
+        _controller.add(_currentData);
       }
     }
   }
@@ -214,7 +214,7 @@ class MetronomeService {
       start(bpm, beatsPerMeasure, countInMeasures: countIn);
     } else {
       _currentData = _currentData.copyWith(bpm: bpm);
-      _controller?.add(_currentData);
+      _controller.add(_currentData);
     }
   }
 
@@ -226,32 +226,33 @@ class MetronomeService {
           countInMeasures: _currentData.countInMeasures);
     } else {
       _currentData = _currentData.copyWith(beatsPerMeasure: beatsPerMeasure);
-      _controller?.add(_currentData);
+      _controller.add(_currentData);
     }
   }
 
   void setAudioEnabled(bool enabled) {
     _currentData = _currentData.copyWith(audioEnabled: enabled);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
   }
 
   void setVisualEnabled(bool enabled) {
     _currentData = _currentData.copyWith(visualEnabled: enabled);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
   }
 
   void setHapticsEnabled(bool enabled) {
     _currentData = _currentData.copyWith(hapticsEnabled: enabled);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
   }
 
   void setCountInMeasures(int measures) {
     if (measures < 0 || measures > 4) return;
     _currentData = _currentData.copyWith(countInMeasures: measures);
-    _controller?.add(_currentData);
+    _controller.add(_currentData);
   }
 
   void dispose() {
     stop();
+    _controller.close();
   }
 }
