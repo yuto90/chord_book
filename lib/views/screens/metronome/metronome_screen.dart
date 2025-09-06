@@ -20,25 +20,31 @@ class MetronomeScreen extends ConsumerWidget {
               // Header with tempo display and settings
               _buildHeader(context, metronomeData, metronomeNotifier),
               
-              const SizedBox(height: 16),
-              
-              // Beat indicator
+              // Centered main content area
               Expanded(
-                child: Column(
-                  children: [
-                    // Count-in or beat visualization
-                    _buildBeatVisualization(metronomeData),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Main controls
-                    _buildMainControls(metronomeData, metronomeNotifier),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // BPM controls
-                    _buildBpmControls(metronomeData, metronomeNotifier),
-                  ],
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Beat visualization
+                      _buildBeatVisualization(metronomeData),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Centered main play button
+                      _buildCenteredPlayButton(metronomeData, metronomeNotifier),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Secondary controls (Stop and Count-in)
+                      _buildSecondaryControls(metronomeData, metronomeNotifier),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // BPM adjustment controls
+                      _buildBpmControls(metronomeData, metronomeNotifier),
+                    ],
+                  ),
                 ),
               ),
               
@@ -53,28 +59,40 @@ class MetronomeScreen extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, metronomeData, metronomeNotifier) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // BPM Display
+        // BPM Display - centered and larger
         Expanded(
-          child: GestureDetector(
-            onTap: () => _showBpmInputDialog(context, metronomeData, metronomeNotifier),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    '${metronomeData.bpm}',
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
+          child: Center(
+            child: GestureDetector(
+              onTap: () => _showBpmInputDialog(context, metronomeData, metronomeNotifier),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${metronomeData.bpm}',
+                      style: const TextStyle(
+                        fontSize: 56,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  const Text('BPM (タップして設定)'),
-                ],
+                    const SizedBox(height: 4),
+                    const Text(
+                      'BPM (タップして設定)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -83,9 +101,16 @@ class MetronomeScreen extends ConsumerWidget {
         const SizedBox(width: 16),
         
         // Settings toggle
-        IconButton(
-          onPressed: () => _showSettingsDialog(context, metronomeData, metronomeNotifier),
-          icon: const Icon(Icons.settings),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            onPressed: () => _showSettingsDialog(context, metronomeData, metronomeNotifier),
+            icon: const Icon(Icons.settings, size: 28),
+            padding: const EdgeInsets.all(12),
+          ),
         ),
       ],
     );
@@ -155,49 +180,103 @@ class MetronomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMainControls(metronomeData, metronomeNotifier) {
+  Widget _buildCenteredPlayButton(metronomeData, metronomeNotifier) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: metronomeNotifier.togglePlayPause,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: metronomeData.state.isPlaying ? Colors.red[600] : Colors.green[600],
+          foregroundColor: Colors.white,
+          minimumSize: const Size(120, 120),
+          shape: const CircleBorder(),
+          elevation: 0,
+          padding: EdgeInsets.zero,
+        ),
+        child: Icon(
+          metronomeData.state.isPlaying ? Icons.pause : Icons.play_arrow,
+          size: 60,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryControls(metronomeData, metronomeNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         // Stop button
-        ElevatedButton(
-          onPressed: metronomeNotifier.stop,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey,
-            minimumSize: const Size(60, 60),
-            shape: const CircleBorder(),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: const Icon(Icons.stop, color: Colors.white),
-        ),
-        
-        // Play/Pause button
-        ElevatedButton(
-          onPressed: metronomeNotifier.togglePlayPause,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: metronomeData.state.isPlaying ? Colors.red : Colors.green,
-            minimumSize: const Size(100, 100),
-            shape: const CircleBorder(),
-          ),
-          child: Icon(
-            metronomeData.state.isPlaying ? Icons.pause : Icons.play_arrow,
-            size: 50,
-            color: Colors.white,
+          child: ElevatedButton(
+            onPressed: metronomeNotifier.stop,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[600],
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 80),
+              shape: const CircleBorder(),
+              elevation: 0,
+            ),
+            child: const Icon(Icons.stop, size: 36, color: Colors.white),
           ),
         ),
         
         // Count-in button
-        ElevatedButton(
-          onPressed: metronomeData.countInMeasures > 0
-              ? () => metronomeNotifier.start(countInMeasures: metronomeData.countInMeasures)
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-            minimumSize: const Size(60, 60),
-            shape: const CircleBorder(),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Text(
-            '${metronomeData.countInMeasures}',
-            style: const TextStyle(color: Colors.white, fontSize: 18),
+          child: ElevatedButton(
+            onPressed: metronomeData.countInMeasures > 0
+                ? () => metronomeNotifier.start(countInMeasures: metronomeData.countInMeasures)
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: metronomeData.countInMeasures > 0 ? Colors.orange[600] : Colors.grey[400],
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 80),
+              shape: const CircleBorder(),
+              elevation: 0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.looks_one, size: 20, color: Colors.white),
+                Text(
+                  '${metronomeData.countInMeasures}',
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -205,51 +284,146 @@ class MetronomeScreen extends ConsumerWidget {
   }
 
   Widget _buildBpmControls(metronomeData, metronomeNotifier) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        // BPM -10
-        ElevatedButton(
-          onPressed: () => metronomeNotifier.adjustBpm(-10),
-          child: const Text('-10'),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'BPM調整',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // BPM -10
+              _buildBpmButton(
+                label: '-10',
+                onPressed: () => metronomeNotifier.adjustBpm(-10),
+                color: Colors.red[400]!,
+              ),
+              
+              // BPM -1
+              _buildBpmButton(
+                icon: Icons.remove,
+                onPressed: () => metronomeNotifier.adjustBpm(-1),
+                color: Colors.red[300]!,
+              ),
+              
+              // BPM +1
+              _buildBpmButton(
+                icon: Icons.add,
+                onPressed: () => metronomeNotifier.adjustBpm(1),
+                color: Colors.blue[300]!,
+              ),
+              
+              // BPM +10
+              _buildBpmButton(
+                label: '+10',
+                onPressed: () => metronomeNotifier.adjustBpm(10),
+                color: Colors.blue[400]!,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBpmButton({
+    String? label,
+    IconData? icon,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(64, 64),
+          shape: const CircleBorder(),
+          elevation: 0,
+          padding: EdgeInsets.zero,
         ),
-        
-        // BPM -1
-        ElevatedButton(
-          onPressed: () => metronomeNotifier.adjustBpm(-1),
-          child: const Icon(Icons.remove),
-        ),
-        
-        // BPM +1
-        ElevatedButton(
-          onPressed: () => metronomeNotifier.adjustBpm(1),
-          child: const Icon(Icons.add),
-        ),
-        
-        // BPM +10
-        ElevatedButton(
-          onPressed: () => metronomeNotifier.adjustBpm(10),
-          child: const Text('+10'),
-        ),
-      ],
+        child: label != null
+            ? Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              )
+            : Icon(
+                icon,
+                size: 28,
+                color: Colors.white,
+              ),
+      ),
     );
   }
 
   Widget _buildBottomControls(metronomeData, metronomeNotifier) {
-    return Column(
-      children: [
-        // Time signature controls
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('拍子: '),
-            DropdownButton<int>(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.music_note, color: Colors.grey),
+          const SizedBox(width: 8),
+          const Text(
+            '拍子: ',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: DropdownButton<int>(
               value: metronomeData.beatsPerMeasure,
+              underline: const SizedBox(),
               onChanged: (value) {
                 if (value != null) {
                   metronomeNotifier.setBeatsPerMeasure(value);
                 }
               },
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
               items: [2, 3, 4, 5, 6, 7, 8].map((beats) {
                 return DropdownMenuItem(
                   value: beats,
@@ -257,9 +431,9 @@ class MetronomeScreen extends ConsumerWidget {
                 );
               }).toList(),
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
