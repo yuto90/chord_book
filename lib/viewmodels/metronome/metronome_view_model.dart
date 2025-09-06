@@ -13,8 +13,9 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
     });
   }
 
-  void start() {
-    _metronomeService.start(state.bpm, state.beatsPerMeasure);
+  void start({int countInMeasures = 0}) {
+    _metronomeService.start(state.bpm, state.beatsPerMeasure,
+        countInMeasures: countInMeasures);
   }
 
   void stop() {
@@ -30,7 +31,7 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
   }
 
   void setBpm(int bpm) {
-    if (bpm >= 40 && bpm <= 200) {
+    if (bpm >= 30 && bpm <= 300) {
       _metronomeService.setBpm(bpm);
     }
   }
@@ -46,9 +47,13 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
       pause();
     } else if (state.state.isPaused) {
       resume();
-    } else {
-      start();
+    } else if (state.state.isStopped) {
+      start(countInMeasures: state.countInMeasures);
     }
+  }
+
+  void adjustBpm(int delta) {
+    setBpm(state.bpm + delta);
   }
 
   @override
@@ -58,11 +63,11 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
   }
 }
 
-final metronomeProvider = StateNotifierProvider<MetronomeNotifier, MetronomeData>(
+final metronomeProvider =
+    StateNotifierProvider<MetronomeNotifier, MetronomeData>(
   (ref) => MetronomeNotifier(),
 );
 
-// Computed providers for convenience
 final metronomeBpmProvider = Provider<int>((ref) {
   return ref.watch(metronomeProvider).bpm;
 });
