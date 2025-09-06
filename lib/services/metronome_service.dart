@@ -31,9 +31,10 @@ class MetronomeService {
       countInMeasures: countInMeasures,
       isCountingIn: countInMeasures > 0,
       countInBeat: countInMeasures > 0 ? 1 : 0,
-      audioEnabled: _currentData.audioEnabled,
-      visualEnabled: _currentData.visualEnabled,
-      hapticsEnabled: _currentData.hapticsEnabled,
+      // 設定固定化: audio / visual / haptics は常に true
+      audioEnabled: true,
+      visualEnabled: true,
+      hapticsEnabled: true,
     );
     _controller.add(_currentData);
     if (countInMeasures > 0) {
@@ -94,9 +95,7 @@ class MetronomeService {
     final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
     _currentData = _currentData.copyWith(currentBeat: nextBeat);
     _controller.add(_currentData);
-    if (_currentData.hapticsEnabled) {
-      _triggerHaptics(nextBeat == 1);
-    }
+    _triggerHaptics(nextBeat == 1);
   }
 
   void _startMetronome(int bpm, int beatsPerMeasure) async {
@@ -126,22 +125,14 @@ class MetronomeService {
       final nextBeat = (_currentData.currentBeat % beatsPerMeasure) + 1;
       _currentData = _currentData.copyWith(currentBeat: nextBeat);
       _controller.add(_currentData);
-      if (_currentData.audioEnabled) {
-        SystemSound.play(SystemSoundType.click);
-      }
-      if (_currentData.hapticsEnabled) {
-        _triggerHaptics(nextBeat == 1);
-      }
+      SystemSound.play(SystemSoundType.click);
+      _triggerHaptics(nextBeat == 1);
     });
   }
 
   void _playCountInSound(int beat, int beatsPerMeasure) {
-    if (_currentData.audioEnabled) {
-      SystemSound.play(SystemSoundType.click);
-    }
-    if (_currentData.hapticsEnabled) {
-      _triggerHaptics(((beat - 1) % beatsPerMeasure) == 0);
-    }
+    SystemSound.play(SystemSoundType.click);
+    _triggerHaptics(((beat - 1) % beatsPerMeasure) == 0);
   }
 
   void _triggerHaptics(bool isStrongBeat) {
@@ -228,27 +219,6 @@ class MetronomeService {
       _currentData = _currentData.copyWith(beatsPerMeasure: beatsPerMeasure);
       _controller.add(_currentData);
     }
-  }
-
-  void setAudioEnabled(bool enabled) {
-    _currentData = _currentData.copyWith(audioEnabled: enabled);
-    _controller.add(_currentData);
-  }
-
-  void setVisualEnabled(bool enabled) {
-    _currentData = _currentData.copyWith(visualEnabled: enabled);
-    _controller.add(_currentData);
-  }
-
-  void setHapticsEnabled(bool enabled) {
-    _currentData = _currentData.copyWith(hapticsEnabled: enabled);
-    _controller.add(_currentData);
-  }
-
-  void setCountInMeasures(int measures) {
-    if (measures < 0 || measures > 4) return;
-    _currentData = _currentData.copyWith(countInMeasures: measures);
-    _controller.add(_currentData);
   }
 
   void dispose() {

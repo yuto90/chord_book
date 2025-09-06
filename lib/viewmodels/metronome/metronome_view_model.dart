@@ -14,8 +14,8 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
   }
 
   void start({int countInMeasures = 0}) {
-    _metronomeService.start(state.bpm, state.beatsPerMeasure, 
-                           countInMeasures: countInMeasures);
+    _metronomeService.start(state.bpm, state.beatsPerMeasure,
+        countInMeasures: countInMeasures);
   }
 
   void stop() {
@@ -42,22 +42,6 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
     }
   }
 
-  void setAudioEnabled(bool enabled) {
-    _metronomeService.setAudioEnabled(enabled);
-  }
-
-  void setVisualEnabled(bool enabled) {
-    _metronomeService.setVisualEnabled(enabled);
-  }
-
-  void setHapticsEnabled(bool enabled) {
-    _metronomeService.setHapticsEnabled(enabled);
-  }
-
-  void setCountInMeasures(int measures) {
-    _metronomeService.setCountInMeasures(measures);
-  }
-
   void togglePlayPause() {
     if (state.state.isPlaying) {
       pause();
@@ -79,11 +63,11 @@ class MetronomeNotifier extends StateNotifier<MetronomeData> {
   }
 }
 
-final metronomeProvider = StateNotifierProvider<MetronomeNotifier, MetronomeData>(
+final metronomeProvider =
+    StateNotifierProvider<MetronomeNotifier, MetronomeData>(
   (ref) => MetronomeNotifier(),
 );
 
-// Computed providers for convenience
 final metronomeBpmProvider = Provider<int>((ref) {
   return ref.watch(metronomeProvider).bpm;
 });
@@ -98,24 +82,4 @@ final metronomeStateProvider = Provider<MetronomeState>((ref) {
 
 final metronomeCurrentBeatProvider = Provider<int>((ref) {
   return ref.watch(metronomeProvider).currentBeat;
-});
-
-final metronomeAudioEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(metronomeProvider).audioEnabled;
-});
-
-final metronomeVisualEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(metronomeProvider).visualEnabled;
-});
-
-final metronomeHapticsEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(metronomeProvider).hapticsEnabled;
-});
-
-final metronomeCountInProvider = Provider<int>((ref) {
-  return ref.watch(metronomeProvider).countInMeasures;
-});
-
-final metronomeIsCountingInProvider = Provider<bool>((ref) {
-  return ref.watch(metronomeProvider).isInCountIn;
 });

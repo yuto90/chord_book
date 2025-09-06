@@ -17,38 +17,24 @@ class MetronomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Header with tempo display and settings
               _buildHeader(context, metronomeData, metronomeNotifier),
-              
-              // Centered main content area
               Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Beat visualization
                       _buildBeatVisualization(metronomeData),
-                      
-                      const SizedBox(height: 40),
-                      
-                      // Centered main play button
-                      _buildCenteredPlayButton(metronomeData, metronomeNotifier),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Secondary controls (Stop and Count-in)
+                      const SizedBox(height: 20),
+                      _buildCenteredPlayButton(
+                          metronomeData, metronomeNotifier),
+                      const SizedBox(height: 12),
                       _buildSecondaryControls(metronomeData, metronomeNotifier),
-                      
-                      const SizedBox(height: 40),
-                      
-                      // BPM adjustment controls
+                      const SizedBox(height: 20),
                       _buildBpmControls(metronomeData, metronomeNotifier),
                     ],
                   ),
                 ),
               ),
-              
-              // Bottom controls
               _buildBottomControls(metronomeData, metronomeNotifier),
             ],
           ),
@@ -61,13 +47,14 @@ class MetronomeScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // BPM Display - centered and larger
         Expanded(
           child: Center(
             child: GestureDetector(
-              onTap: () => _showBpmInputDialog(context, metronomeData, metronomeNotifier),
+              onTap: () => _showBpmInputDialog(
+                  context, metronomeData, metronomeNotifier),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(16),
@@ -97,21 +84,6 @@ class MetronomeScreen extends ConsumerWidget {
             ),
           ),
         ),
-        
-        const SizedBox(width: 16),
-        
-        // Settings toggle
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            onPressed: () => _showSettingsDialog(context, metronomeData, metronomeNotifier),
-            icon: const Icon(Icons.settings, size: 28),
-            padding: const EdgeInsets.all(12),
-          ),
-        ),
       ],
     );
   }
@@ -124,7 +96,7 @@ class MetronomeScreen extends ConsumerWidget {
   }
 
   Widget _buildCountInVisualization(metronomeData) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: Column(
         children: [
@@ -153,16 +125,15 @@ class MetronomeScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(metronomeData.beatsPerMeasure, (index) {
           final beatNumber = index + 1;
-          final isCurrentBeat = beatNumber == metronomeData.currentBeat && 
-                               metronomeData.state.isPlaying &&
-                               metronomeData.visualEnabled;
+          final isCurrentBeat = beatNumber == metronomeData.currentBeat &&
+              metronomeData.state.isPlaying; // visualEnabled 削除
           final isStrongBeat = beatNumber == 1;
-          
+
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 8),
             child: CircleAvatar(
               radius: 30,
-              backgroundColor: isCurrentBeat 
+              backgroundColor: isCurrentBeat
                   ? (isStrongBeat ? Colors.red : Colors.blue)
                   : Colors.grey[300],
               child: Text(
@@ -195,7 +166,9 @@ class MetronomeScreen extends ConsumerWidget {
       child: ElevatedButton(
         onPressed: metronomeNotifier.togglePlayPause,
         style: ElevatedButton.styleFrom(
-          backgroundColor: metronomeData.state.isPlaying ? Colors.red[600] : Colors.green[600],
+          backgroundColor: metronomeData.state.isPlaying
+              ? Colors.red[600]
+              : Colors.green[600],
           foregroundColor: Colors.white,
           minimumSize: const Size(120, 120),
           shape: const CircleBorder(),
@@ -215,7 +188,6 @@ class MetronomeScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Stop button
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -239,8 +211,6 @@ class MetronomeScreen extends ConsumerWidget {
             child: const Icon(Icons.stop, size: 36, color: Colors.white),
           ),
         ),
-        
-        // Count-in button
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -254,10 +224,13 @@ class MetronomeScreen extends ConsumerWidget {
           ),
           child: ElevatedButton(
             onPressed: metronomeData.countInMeasures > 0
-                ? () => metronomeNotifier.start(countInMeasures: metronomeData.countInMeasures)
+                ? () => metronomeNotifier.start(
+                    countInMeasures: metronomeData.countInMeasures)
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: metronomeData.countInMeasures > 0 ? Colors.orange[600] : Colors.grey[400],
+              backgroundColor: metronomeData.countInMeasures > 0
+                  ? Colors.orange[600]
+                  : Colors.grey[400],
               foregroundColor: Colors.white,
               minimumSize: const Size(80, 80),
               shape: const CircleBorder(),
@@ -270,7 +243,7 @@ class MetronomeScreen extends ConsumerWidget {
                 Text(
                   '${metronomeData.countInMeasures}',
                   style: const TextStyle(
-                    color: Colors.white, 
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -305,28 +278,21 @@ class MetronomeScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // BPM -10
               _buildBpmButton(
                 label: '-10',
                 onPressed: () => metronomeNotifier.adjustBpm(-10),
                 color: Colors.red[400]!,
               ),
-              
-              // BPM -1
               _buildBpmButton(
                 icon: Icons.remove,
                 onPressed: () => metronomeNotifier.adjustBpm(-1),
                 color: Colors.red[300]!,
               ),
-              
-              // BPM +1
               _buildBpmButton(
                 icon: Icons.add,
                 onPressed: () => metronomeNotifier.adjustBpm(1),
                 color: Colors.blue[300]!,
               ),
-              
-              // BPM +10
               _buildBpmButton(
                 label: '+10',
                 onPressed: () => metronomeNotifier.adjustBpm(10),
@@ -437,11 +403,12 @@ class MetronomeScreen extends ConsumerWidget {
     );
   }
 
-  void _showBpmInputDialog(BuildContext context, metronomeData, metronomeNotifier) {
+  void _showBpmInputDialog(
+      BuildContext context, metronomeData, metronomeNotifier) {
     final TextEditingController bpmController = TextEditingController(
       text: metronomeData.bpm.toString(),
     );
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -491,69 +458,6 @@ class MetronomeScreen extends ConsumerWidget {
               }
             },
             child: const Text('設定'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSettingsDialog(BuildContext context, metronomeData, metronomeNotifier) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('メトロノーム設定'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Audio setting
-            SwitchListTile(
-              title: const Text('音声出力'),
-              value: metronomeData.audioEnabled,
-              onChanged: metronomeNotifier.setAudioEnabled,
-            ),
-            
-            // Visual setting
-            SwitchListTile(
-              title: const Text('ビジュアル表示'),
-              value: metronomeData.visualEnabled,
-              onChanged: metronomeNotifier.setVisualEnabled,
-            ),
-            
-            // Haptics setting
-            SwitchListTile(
-              title: const Text('ハプティクス'),
-              value: metronomeData.hapticsEnabled,
-              onChanged: metronomeNotifier.setHapticsEnabled,
-            ),
-            
-            const Divider(),
-            
-            // Count-in setting
-            Row(
-              children: [
-                const Text('カウントイン: '),
-                DropdownButton<int>(
-                  value: metronomeData.countInMeasures,
-                  onChanged: (value) {
-                    if (value != null) {
-                      metronomeNotifier.setCountInMeasures(value);
-                    }
-                  },
-                  items: [0, 1, 2, 3, 4].map((measures) {
-                    return DropdownMenuItem(
-                      value: measures,
-                      child: Text(measures == 0 ? 'OFF' : '$measures小節'),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('閉じる'),
           ),
         ],
       ),
