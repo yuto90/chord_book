@@ -17,13 +17,18 @@ class MetronomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              // 拍子カウント（ビート可視化）を最上部に移動
+              _buildBeatVisualization(metronomeData),
+              const SizedBox(height: 16),
               _buildHeader(context, metronomeData, metronomeNotifier),
               Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildBeatVisualization(metronomeData),
+                      // 上部へ移動したためここから削除
+                      // const SizedBox(height: 20), // 不要になった余白も削除
+                      _buildBottomControls(metronomeData, metronomeNotifier),
                       const SizedBox(height: 20),
                       _buildCenteredPlayButton(
                           metronomeData, metronomeNotifier),
@@ -31,11 +36,11 @@ class MetronomeScreen extends ConsumerWidget {
                       _buildSecondaryControls(metronomeData, metronomeNotifier),
                       const SizedBox(height: 20),
                       _buildBpmControls(metronomeData, metronomeNotifier),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
-              _buildBottomControls(metronomeData, metronomeNotifier),
             ],
           ),
         ),
@@ -119,7 +124,7 @@ class MetronomeScreen extends ConsumerWidget {
   }
 
   Widget _buildNormalBeatVisualization(metronomeData) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -266,23 +271,10 @@ class MetronomeScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text(
-            'BPM調整',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-            ),
-          ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildBpmButton(
-                label: '-10',
-                onPressed: () => metronomeNotifier.adjustBpm(-10),
-                color: Colors.red[400]!,
-              ),
               _buildBpmButton(
                 icon: Icons.remove,
                 onPressed: () => metronomeNotifier.adjustBpm(-1),
@@ -292,11 +284,6 @@ class MetronomeScreen extends ConsumerWidget {
                 icon: Icons.add,
                 onPressed: () => metronomeNotifier.adjustBpm(1),
                 color: Colors.blue[300]!,
-              ),
-              _buildBpmButton(
-                label: '+10',
-                onPressed: () => metronomeNotifier.adjustBpm(10),
-                color: Colors.blue[400]!,
               ),
             ],
           ),
