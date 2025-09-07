@@ -30,11 +30,6 @@ class MetronomeScreen extends ConsumerWidget {
                       // const SizedBox(height: 20), // 不要になった余白も削除
                       _buildBottomControls(metronomeData, metronomeNotifier),
                       const SizedBox(height: 20),
-                      _buildCenteredPlayButton(
-                          metronomeData, metronomeNotifier),
-                      const SizedBox(height: 12),
-                      _buildSecondaryControls(metronomeData, metronomeNotifier),
-                      const SizedBox(height: 20),
                       _buildBpmControls(metronomeData, metronomeNotifier),
                       const SizedBox(height: 20),
                     ],
@@ -156,7 +151,7 @@ class MetronomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCenteredPlayButton(metronomeData, metronomeNotifier) {
+  Widget _buildCombinedPlayStopButton(metronomeData, metronomeNotifier) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -169,56 +164,32 @@ class MetronomeScreen extends ConsumerWidget {
         ],
       ),
       child: ElevatedButton(
-        onPressed: metronomeNotifier.togglePlayPause,
+        onPressed: () {
+          if (metronomeData.state.isPlaying) {
+            metronomeNotifier.stop();
+          } else {
+            metronomeNotifier.start(countInMeasures: metronomeData.countInMeasures);
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: metronomeData.state.isPlaying
               ? Colors.red[600]
               : Colors.green[600],
           foregroundColor: Colors.white,
-          minimumSize: const Size(120, 120),
+          minimumSize: const Size(80, 80),
           shape: const CircleBorder(),
           elevation: 0,
           padding: EdgeInsets.zero,
         ),
         child: Icon(
-          metronomeData.state.isPlaying ? Icons.pause : Icons.play_arrow,
-          size: 60,
+          metronomeData.state.isPlaying ? Icons.stop : Icons.play_arrow,
+          size: 40,
           color: Colors.white,
         ),
       ),
     );
   }
 
-  Widget _buildSecondaryControls(metronomeData, metronomeNotifier) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: metronomeNotifier.stop,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[600],
-              foregroundColor: Colors.white,
-              minimumSize: const Size(80, 80),
-              shape: const CircleBorder(),
-              elevation: 0,
-            ),
-            child: const Icon(Icons.stop, size: 36, color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBpmControls(metronomeData, metronomeNotifier) {
     return Container(
@@ -239,6 +210,7 @@ class MetronomeScreen extends ConsumerWidget {
                 onPressed: () => metronomeNotifier.adjustBpm(-1),
                 color: Colors.red[300]!,
               ),
+              _buildCombinedPlayStopButton(metronomeData, metronomeNotifier),
               _buildBpmButton(
                 icon: Icons.add,
                 onPressed: () => metronomeNotifier.adjustBpm(1),
