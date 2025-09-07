@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../viewmodels/metronome/metronome_view_model.dart';
-import '../../../models/enums/metronome_state.dart';
 
 class MetronomeScreen extends ConsumerWidget {
   const MetronomeScreen({super.key});
@@ -17,17 +16,23 @@ class MetronomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 拍子カウント（ビート可視化）を最上部に移動
-              _buildBeatVisualization(metronomeData),
-              const SizedBox(height: 16),
-              _buildHeader(context, metronomeData, metronomeNotifier),
               Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 上部へ移動したためここから削除
-                      // const SizedBox(height: 20), // 不要になった余白も削除
+                      _buildBeatVisualization(metronomeData),
+                      const SizedBox(height: 20),
+                      _buildHeader(context, metronomeData, metronomeNotifier),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       _buildBottomControls(metronomeData, metronomeNotifier),
                       const SizedBox(height: 20),
                       _buildBpmControls(metronomeData, metronomeNotifier),
@@ -168,13 +173,12 @@ class MetronomeScreen extends ConsumerWidget {
           if (metronomeData.state.isPlaying) {
             metronomeNotifier.stop();
           } else {
-            metronomeNotifier.start(countInMeasures: metronomeData.countInMeasures);
+            metronomeNotifier.start(
+                countInMeasures: metronomeData.countInMeasures);
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: metronomeData.state.isPlaying
-              ? Colors.red[600]
-              : Colors.green[600],
+          backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           minimumSize: const Size(80, 80),
           shape: const CircleBorder(),
@@ -189,7 +193,6 @@ class MetronomeScreen extends ConsumerWidget {
       ),
     );
   }
-
 
   Widget _buildBpmControls(metronomeData, metronomeNotifier) {
     return Container(
