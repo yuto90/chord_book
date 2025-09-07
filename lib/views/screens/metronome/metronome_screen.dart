@@ -191,7 +191,7 @@ class MetronomeScreen extends ConsumerWidget {
 
   Widget _buildSecondaryControls(metronomeData, metronomeNotifier) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           decoration: BoxDecoration(
@@ -214,47 +214,6 @@ class MetronomeScreen extends ConsumerWidget {
               elevation: 0,
             ),
             child: const Icon(Icons.stop, size: 36, color: Colors.white),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: metronomeData.countInMeasures > 0
-                ? () => metronomeNotifier.start(
-                    countInMeasures: metronomeData.countInMeasures)
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: metronomeData.countInMeasures > 0
-                  ? Colors.orange[600]
-                  : Colors.grey[400],
-              foregroundColor: Colors.white,
-              minimumSize: const Size(80, 80),
-              shape: const CircleBorder(),
-              elevation: 0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.looks_one, size: 20, color: Colors.white),
-                Text(
-                  '${metronomeData.countInMeasures}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ],
