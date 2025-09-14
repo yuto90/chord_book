@@ -43,3 +43,23 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# CI/CD関連の一時ファイル
+*.p12
+*.mobileprovision
+*.p8
+**/build_info/
+certificate_base64.txt
+profile_base64.txt
+api_key_base64.txt
+
+# iOS build artifacts  
+/ios/build/
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/ephemeral/
+/ios/Runner.xcworkspace/xcuserdata/
+
+# FVM
+.fvm/flutter_sdk

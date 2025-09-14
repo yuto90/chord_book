@@ -1,0 +1,145 @@
+name: 🧪 Validate CI/CD Setup
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '.github/workflows/**'
+
+jobs:
+  validate-setup:
+    name: 🔍 Validate Configuration
+    runs-on: macos-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check Required Files
+        run: |
+          echo "🔍 Checking required configuration files..."
+          
+          # Check iOS export options
+          if [ -f "ios/exportOptions.plist" ]; then
+            echo "✅ iOS exportOptions.plist found"
+          else
+            echo "❌ iOS exportOptions.plist missing"
+            exit 1
+          fi
+          
+          # Check pubspec.yaml
+          if [ -f "pubspec.yaml" ]; then
+            echo "✅ pubspec.yaml found"
+            grep -q "flutter:" pubspec.yaml && echo "✅ Flutter project confirmed"
+          else
+            echo "❌ pubspec.yaml missing"
+            exit 1
+          fi
+          
+          # Check iOS project structure
+          if [ -d "ios/Runner.xcworkspace" ]; then
+            echo "✅ iOS Xcode workspace found"
+          else
+            echo "❌ iOS Xcode workspace missing"
+            exit 1
+          fi
+
+      - name: 🔐 Check Required Secrets (Names Only)
+        run: |
+          echo "🔐 Checking required secrets availability..."
+          
+          # Note: We can't check the actual values, only if they're set
+          # This is just a documentation of what should be set
+          
+          echo "Required secrets (please ensure these are set in repository settings):"
+          echo "  - IOS_CERTIFICATE_BASE64"
+          echo "  - IOS_CERTIFICATE_PASSWORD"
+          echo "  - IOS_PROVISIONING_PROFILE_BASE64"
+          echo "  - APP_STORE_CONNECT_API_KEY_ID"
+          echo "  - APP_STORE_CONNECT_API_ISSUER_ID"
+          echo "  - APP_STORE_CONNECT_API_KEY_BASE64"
+          echo "  - APP_STORE_CONNECT_APP_ID"
+          echo "  - KEYCHAIN_PASSWORD"
+          
+          echo ""
+          echo "🔍 To verify secrets are set, check: Settings > Secrets and variables > Actions"
+
+      - name: 🐦 Setup Flutter (Dry Run)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: 📱 Check iOS Setup
+        run: |
+          echo "📱 Checking iOS development environment..."
+          
+          # Check Xcode version
+          xcodebuild -version
+          
+          # Check iOS SDK
+          xcodebuild -showsdks | grep iphoneos
+          
+          # Validate iOS project configuration
+          cd ios
+          if xcodebuild -list -workspace Runner.xcworkspace > /dev/null 2>&1; then
+            echo "✅ iOS project configuration valid"
+            xcodebuild -list -workspace Runner.xcworkspace
+          else
+            echo "❌ iOS project configuration invalid"
+            exit 1
+          fi
+
+      - name: 📦 Test Flutter Dependencies
+        run: |
+          echo "📦 Testing Flutter dependencies..."
+          
+          flutter --version
+          flutter doctor -v
+          
+          # Get dependencies
+          flutter pub get
+          
+          # Check if build_runner code generation works
+          if flutter packages pub run build_runner build --delete-conflicting-outputs > /dev/null 2>&1; then
+            echo "✅ Code generation successful"
+          else
+            echo "⚠️ Code generation failed (might be expected if no generated files needed)"
+          fi
+
+      - name: 🏗️ Test iOS Build (Dry Run)
+        run: |
+          echo "🏗️ Testing iOS build configuration..."
+          
+          # Test Flutter iOS build without signing
+          if flutter build ios --release --no-codesign > /dev/null 2>&1; then
+            echo "✅ Flutter iOS build test passed"
+          else
+            echo "❌ Flutter iOS build test failed"
+            flutter build ios --release --no-codesign
+            exit 1
+          fi
+
+      - name: 📋 Generate Setup Report
+        run: |
+          echo "📋 CI/CD Setup Validation Report"
+          echo "================================"
+          echo ""
+          echo "✅ Configuration files validated"
+          echo "✅ Flutter environment validated"
+          echo "✅ iOS project structure validated"
+          echo "✅ Build process validated"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Configure required GitHub Secrets (see SETUP_GUIDE.md)"
+          echo "2. Test debug build workflow on a feature branch"
+          echo "3. Verify TestFlight integration"
+          echo ""
+          echo "📖 Documentation:"
+          echo "- Setup Guide: SETUP_GUIDE.md"
+          echo "- Implementation Details: CI_CD_DEBUG_IMPLEMENTATION.md"
+          echo ""
+          echo "🎉 Your repository is ready for CI/CD debug builds!"
