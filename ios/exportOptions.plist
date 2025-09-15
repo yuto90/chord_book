@@ -14,14 +14,9 @@
     <false/>
     <key>manageAppVersionAndBuildNumber</key>
     <false/>
+    <key>signingStyle</key>
+    <string>automatic</string>
     <key>teamID</key>
     <string>M38VA3QPJR</string>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.chordbook.chordBook</key>
-        <string>Chord Book Debug Profile</string>
-    </dict>
 </dict>
 </plist>

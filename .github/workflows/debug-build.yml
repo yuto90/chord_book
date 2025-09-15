@@ -1,4 +1,4 @@
-name: 🐛 Debug Build & TestFlight Upload
+name: 🐛 Simplified Debug Build & TestFlight Upload
 
 on:
   push:
@@ -52,27 +52,15 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_15.3.app/Contents/Developer
           xcodebuild -version
 
-      - name: 🔐 Setup iOS Code Signing
+      - name: 🔐 Setup App Store Connect Authentication
         env:
-          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
         run: |
-          # Create temporary keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
-
-          # Decode and install certificate
-          echo "$IOS_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
-          security import certificate.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
-
-          # Install provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/debug_profile.mobileprovision
+          # App Store Connect APIキーの設定
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_ID.p8
 
       - name: 📦 Get Dependencies
         run: |
@@ -117,50 +105,22 @@ jobs:
           # iOS Info.plistの表示名を更新（デバッグ版であることを明示）
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Chord Book (Debug)'" ios/Runner/Info.plist
 
-      - name: 🏗️ Build iOS App
+      - name: 🏗️ Build iOS App with Auto-Signing
         run: |
           flutter build ios \
             --release \
-            --no-codesign \
             --build-name="${{ steps.build_number.outputs.version_name }}" \
             --build-number="${{ steps.build_number.outputs.build_number }}"
 
-      - name: 📱 Build & Sign IPA
-        run: |
-          cd ios
-          xcodebuild \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -destination generic/platform=iOS \
-            -archivePath build/Runner.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="Chord Book Debug Profile"
-          
-          xcodebuild \
-            -exportArchive \
-            -archivePath build/Runner.xcarchive \
-            -exportPath build/Runner.ipa \
-            -exportOptionsPlist exportOptions.plist
-
       - name: 🚀 Upload to TestFlight
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
         run: |
-          # API Keyの設定
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_ID.p8
-
-          # TestFlightにアップロード
+          # TestFlightにアップロード（自動署名を使用）
           xcrun altool \
             --upload-app \
             --type ios \
-            --file "ios/build/Runner.ipa/Runner.ipa" \
-            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_API_ISSUER_ID" \
+            --file "build/ios/ipa/Runner.ipa" \
+            --apiKey "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}" \
             --verbose
 
       - name: 💾 Store Build Information
@@ -185,7 +145,7 @@ jobs:
           name: debug-build-${{ steps.build_number.outputs.safe_branch }}-${{ steps.build_number.outputs.build_number }}
           path: |
             build_info/
-            ios/build/Runner.ipa/
+            build/ios/ipa/
           retention-days: 30
 
       - name: 📝 Comment on PR
@@ -198,7 +158,7 @@ jobs:
             const branch = '${{ steps.build_number.outputs.branch_name }}';
             const eventName = '${{ github.event_name }}';
             
-            let comment = `## 🐛 デバッグビルドが完了しました
+            let comment = `## 🐛 デバッグビルドが完了しました（簡易版）
 
             **ブランチ:** \`${branch}\`
             **バージョン:** \`${versionName}\`
@@ -206,7 +166,12 @@ jobs:
             **トリガー:** ${eventName === 'pull_request' ? 'Pull Request' : eventName === 'workflow_dispatch' ? '手動実行' : 'Push'}
             
             📱 TestFlightでデバッグ版をテストできます。
-            アプリ名: **Chord Book (Debug)**`;
+            アプリ名: **Chord Book (Debug)**
+            
+            ✨ **改善点:**
+            - 必要なSecretsが3つに削減されました
+            - 自動署名でセットアップが簡単になりました
+            - 証明書管理が不要になりました`;
             
             if (eventName === 'pull_request') {
               comment += '\n\n⚠️ このデバッグビルドはPRマージ後に自動的に削除されます。';
@@ -222,9 +187,5 @@ jobs:
       - name: 🧹 Cleanup
         if: always()
         run: |
-          # Keychainのクリーンアップ
-          security delete-keychain build.keychain || true
-          
           # 一時ファイルの削除
-          rm -f certificate.p12
-          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/debug_profile.mobileprovision
+          rm -f ~/.appstoreconnect/private_keys/AuthKey_*.p8
