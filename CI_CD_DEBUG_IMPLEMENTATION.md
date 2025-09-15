@@ -96,7 +96,7 @@ ios/
    - Base64でエンコードしてSecretsに設定
 
 2. **プロビジョニングプロファイルの作成**
-   - Bundle ID: `com.chordbook.chordBook`
+   - Bundle ID: `com.yuto.chordbook`
    - Profile名: 「Chord Book Debug Profile」
    - `.mobileprovision`ファイルをBase64エンコードしてSecretsに設定
 
@@ -166,7 +166,7 @@ Error: No signing certificate "iPhone Distribution" found
 Error: No provisioning profile found for bundle identifier
 ```
 **解決方法**:
-- Bundle IDが一致しているか確認（`com.chordbook.chordBook`）
+- Bundle IDが一致しているか確認（`com.yuto.chordbook`）
 - プロビジョニングプロファイルの有効期限を確認
 - デバイス登録状況を確認
 

@@ -118,7 +118,7 @@ develop                 → 0.1.0-debug-develop+20240914123378
 8. `KEYCHAIN_PASSWORD` - 一時キーチェーンパスワード
 
 ### Apple Developer設定
-- Bundle ID: `com.chordbook.chordBook`
+- Bundle ID: `com.yuto.chordbook`
 - Development Team: `M38VA3QPJR`
 - Distribution証明書の作成
 - プロビジョニングプロファイル「Chord Book Debug Profile」の作成

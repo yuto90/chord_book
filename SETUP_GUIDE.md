@@ -28,12 +28,12 @@
 #### B. プロビジョニングプロファイルの準備
 
 1. **App IDの確認・作成**
-   - Bundle ID: `com.chordbook.chordBook`
+   - Bundle ID: `com.yuto.chordbook`
    - Services: 必要なサービスを有効化
 
 2. **プロビジョニングプロファイルの作成**
    - Type: App Store
-   - App ID: com.chordbook.chordBook
+   - App ID: com.yuto.chordbook
    - Certificates: 上記で作成したDistribution証明書を選択
    - Profile Name: "Chord Book Debug Profile"
 
