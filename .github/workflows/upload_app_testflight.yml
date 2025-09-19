@@ -1,4 +1,4 @@
-name: Build
+name: Build and Upload to TestFlight
 
 on:
   push:
@@ -16,24 +16,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Archive
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
         run: |
-          xcodebuild archive -project chord_book.xcodeproj -scheme chord_book -archivePath chord_book.xcarchive -sdk iphoneos -configuration Release CODE_SIGNING_ALLOWED=NO
+          flutter --version
+          flutter pub get
+
+      - name: Install CocoaPods
+        working-directory: ios
+        run: |
+          pod install --repo-update
+
+      - name: Archive (Runner workspace)
+        run: |
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -archivePath ios/build/Runner.xcarchive \
+            -sdk iphoneos \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Create ExportOptions.plist
         run: |
-          echo '${{ secrets.EXPORT_OPTIONS }}' > ExportOptions.plist
-          cat ExportOptions.plist
+          echo '${{ secrets.EXPORT_OPTIONS }}' > ios/ExportOptions.plist
+          cat ios/ExportOptions.plist
 
-      - name: Create Private Key
+      - name: Prepare App Store Connect API key
         run: |
-          mkdir private_keys
-          echo -n '${{ secrets.APPLE_API_KEY_BASE64 }}' | base64 --decode > ./private_keys/AuthKey_${{ secrets.APPLE_API_ISSUER_ID }}.p8
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo -n '${{ secrets.APPLE_API_KEY_BASE64 }}' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
       - name: Export IPA
         run: |
-          xcodebuild -exportArchive -archivePath chord_book.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath chord_book.ipa -allowProvisioningUpdates -authenticationKeyPath `pwd`/private_keys/AuthKey_${{ secrets.APPLE_API_ISSUER_ID }}.p8 -authenticationKeyID ${{ secrets.APPLE_API_KEY_ID }} -authenticationKeyIssuerID ${{ secrets.APPLE_API_ISSUER_ID }}
+          xcodebuild \
+            -exportArchive \
+            -archivePath ios/build/Runner.xcarchive \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportPath ios/build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.APPLE_API_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APPLE_API_ISSUER_ID }}
 
-      - name: Upload to App Store Connect
+      - name: Upload to App Store Connect (iTMSTransporter)
         run: |
-          xcrun altool --upload-app -f chord_book.ipa/chord_book.ipa -t ios -u ${{ secrets.APPLE_ID }} -p ${{ secrets.APP_SPECIFIC_PASSWORD }} --type ios
+          xcrun iTMSTransporter -m upload -assetFile ios/build/export/Runner.ipa -apiKey ${{ secrets.APPLE_API_KEY_ID }} -apiIssuer ${{ secrets.APPLE_API_ISSUER_ID }} -v informational
