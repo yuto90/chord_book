@@ -1,0 +1,207 @@
+name: 🐛 Simplified Debug Build & TestFlight Upload
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'develop'
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - 'main'
+      - 'develop'
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build (leave empty for current branch)'
+        required: false
+        default: ''
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  debug-build:
+    name: 🏗️ Build & Upload Debug Version
+    runs-on: macos-14
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📱 Setup iOS Environment
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.3.app/Contents/Developer
+          xcodebuild -version
+
+      - name: 🔐 Setup App Store Connect Authentication
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          # App Store Connect APIキーの設定
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_ID.p8
+
+      - name: 📦 Get Dependencies
+        run: |
+          flutter pub get
+          cd ios && pod install --repo-update
+
+      - name: 🏷️ Generate Build Number
+        id: build_number
+        run: |
+          # ブランチ名を決定（manual trigger、PR、pushの順で判定）
+          if [ -n "${{ github.event.inputs.branch }}" ]; then
+            BRANCH_NAME="${{ github.event.inputs.branch }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+          
+          # ブランチ名を安全な形式に変換
+          SAFE_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+          
+          # タイムスタンプベースのビルド番号
+          BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
+          
+          # デバッグ用のバージョン名
+          VERSION_NAME="0.1.0-debug-$SAFE_BRANCH"
+          
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "safe_branch=$SAFE_BRANCH" >> $GITHUB_OUTPUT
+          
+          echo "🌿 Branch Name: $BRANCH_NAME"
+          echo "🏷️ Build Number: $BUILD_NUMBER"
+          echo "📝 Version Name: $VERSION_NAME"
+
+      - name: 🔧 Update Version
+        run: |
+          # pubspec.yamlのバージョンを更新
+          sed -i '' "s/version: .*/version: ${{ steps.build_number.outputs.version_name }}+${{ steps.build_number.outputs.build_number }}/" pubspec.yaml
+          
+          # iOS Info.plistの表示名を更新（デバッグ版であることを明示）
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Chord Book (Debug)'" ios/Runner/Info.plist
+
+      - name: 🏗️ Build iOS App with Auto-Signing
+        run: |
+          flutter build ios \
+            --release \
+            --build-name="${{ steps.build_number.outputs.version_name }}" \
+            --build-number="${{ steps.build_number.outputs.build_number }}"
+          
+          # Create IPA with automatic signing
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -archivePath build/Runner.xcarchive \
+            -allowProvisioningUpdates \
+            archive
+          
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportPath build \
+            -exportOptionsPlist exportOptions.plist \
+            -allowProvisioningUpdates
+
+      - name: 🚀 Upload to TestFlight
+        run: |
+          # TestFlightにアップロード（自動署名を使用）
+          xcrun altool \
+            --upload-app \
+            --type ios \
+            --file "ios/build/Runner.ipa" \
+            --apiKey "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}" \
+            --verbose
+
+      - name: 💾 Store Build Information
+        run: |
+          # ビルド情報をアーティファクトとして保存
+          mkdir -p build_info
+          cat > build_info/build_info.json << EOF
+          {
+            "branch": "${{ steps.build_number.outputs.branch_name }}",
+            "commit": "${{ github.sha }}",
+            "build_number": "${{ steps.build_number.outputs.build_number }}",
+            "version_name": "${{ steps.build_number.outputs.version_name }}",
+            "workflow_run_id": "${{ github.run_id }}",
+            "event_name": "${{ github.event_name }}",
+            "uploaded_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-build-${{ steps.build_number.outputs.safe_branch }}-${{ steps.build_number.outputs.build_number }}
+          path: |
+            build_info/
+            ios/build/
+          retention-days: 30
+
+      - name: 📝 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildNumber = '${{ steps.build_number.outputs.build_number }}';
+            const versionName = '${{ steps.build_number.outputs.version_name }}';
+            const branch = '${{ steps.build_number.outputs.branch_name }}';
+            const eventName = '${{ github.event_name }}';
+            
+            let comment = `## 🐛 デバッグビルドが完了しました（簡易版）
+
+            **ブランチ:** \`${branch}\`
+            **バージョン:** \`${versionName}\`
+            **ビルド番号:** \`${buildNumber}\`
+            **トリガー:** ${eventName === 'pull_request' ? 'Pull Request' : eventName === 'workflow_dispatch' ? '手動実行' : 'Push'}
+            
+            📱 TestFlightでデバッグ版をテストできます。
+            アプリ名: **Chord Book (Debug)**
+            
+            ✨ **改善点:**
+            - 必要なSecretsが3つに削減されました
+            - 自動署名でセットアップが簡単になりました
+            - 証明書管理が不要になりました`;
+            
+            if (eventName === 'pull_request') {
+              comment += '\n\n⚠️ このデバッグビルドはPRマージ後に自動的に削除されます。';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          # 一時ファイルの削除
+          rm -f ~/.appstoreconnect/private_keys/AuthKey_*.p8
